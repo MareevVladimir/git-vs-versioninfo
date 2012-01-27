@@ -1,18 +1,18 @@
 @ECHO OFF
 SETLOCAL
 
-REM  Script for generation of rc VERSIONINFO & StringFileInfo
+::: git-vs-versioninfo -  Generation of static C# class with version information 
 
-REM ====================
-REM Installation Variables
-REM ====================
+::: ====================
+::: Setup Variables
+::: ====================
 :: VERSION_FILE - Untracked file to be included in packaged source releases.
 ::                it should contain a single line in the format:
 ::                $Project_Name VERSION $tag (ie: Foobar VERSION v1.0.0-alpha0)
 SET VERSION_FILE=.git-vs-versioninfo
 
 :: DEFAULT_VERSION - Version string to be processed when neither Git nor a
-::                packed version file is available.
+::                   packed version file is available.
 SET DEFAULT_VERSION=v1.0.0-devel
 
 :: COUNT_PATCHES_FROM - Determines which tag to count the number of patches from
@@ -24,19 +24,22 @@ SET DEFAULT_VERSION=v1.0.0-devel
 ::                   maint - count from earliest Major.Minor.Maint tag.
 SET COUNT_PATCHES_FROM=maint
 
-:: --------------------
-:CHECK_ARGS
-:: --------------------
+::: --------------------
+::: CHECK_ARGS
+::: --------------------
 
+:: Init Software Name
 SET SW_NAME=
 
 :: Console output only.
 IF [%1] == [] GOTO START
 
+:: Check flag arguments
 IF "%~1" == "--help" GOTO USAGE
 IF "%~1" == "--quiet" SET fQUIET=1& SHIFT
 IF "%~1" == "--force" SET fFORCE=1& SHIFT
 
+:: Check parameter arguments
 IF EXIST %~1\NUL (
   SET CACHE_FILE=%~s1\%VERSION_FILE%
   SHIFT
@@ -66,32 +69,33 @@ IF DEFINED CACHE_FILE (
 )
 GOTO START
 
-:: --------------------
+::: --------------------
 :USAGE
-:: --------------------
-ECHO usage: [--help] ^| ^| [--quiet] [--force] [CACHE PATH] [OUT FILE] [SOFTWARE NAME]
+::: --------------------
+ECHO usage: [--help] ^| ^| [--quiet] [--force] [CACHE PATH] [OUT FILE] [SW NAME]
 ECHO.
 ECHO  When called without arguments version information writes to console.
 ECHO.
-ECHO  --help        - displays this output.
+ECHO  --help     - displays this output.
 ECHO.
-ECHO  --quiet       - Suppress console output.
-ECHO  --force       - Ignore cached version information.
-ECHO  CACHE PATH    - Path for non-tracked file to store git-describe version.
-ECHO  OUT FILE      - Path to writable file that is included in the project's rc file.
-ECHO  SOFTWARE NAME - Override auto-detected software name
+ECHO  --quiet    - Suppress console output.
+ECHO  --force    - Ignore cached version information.
+ECHO  CACHE PATH - Path for non-tracked file to store git-describe version.
+ECHO  OUT FILE   - Path to writable file that is included in the project.
+ECHO  SWE NAME   - Override auto-detected software name
 ECHO.
-ECHO.Version information is expected to be in the format: vMajor[.Minor[.Maint[.Bugfix]]][-stage#][-Patchcount-Committish]
-ECHO.Where -stage# is alpha, beta, or rc. ( example: v1.0.0-alpha0 )
+ECHO.Version information is expected to be in the format: 
+ECHO.vMajor[.Minor[.Maint[.Bugfix]]][-stage#][-Patchcount-Committish]
+ECHO.( where -stage# is alpha, beta, or rc. Example: v1.0.0-alpha0 )
 ECHO.
 ECHO.Example pre-build event:
 ECHO.CALL $(SolutionDir)scripts\git-vs-versioninfo.bat "$(SolutionDir)scripts\" "$(ProjectDir)git-vs-versioninfo.cs" "$(SolutionName)"
 ECHO.
 GOTO END
 
-REM ===================
-REM Entry Point
-REM ===================
+::: ===================
+::: Entry Point
+::: ===================
 :START
 ECHO.
 CALL :INIT_VARS
@@ -114,11 +118,13 @@ IF DEFINED HEADER_OUT_FILE (
 )
 GOTO END
 
-REM ====================
-REM FUNCTIONS
-REM ====================
-:: --------------------
+::: ====================
+::: FUNCTIONS
+::: ====================
+
+::: --------------------
 :INIT_VARS
+::: --------------------
 SET FULL_VERSION=
 SET PLUGIN_API_VERSION=0
 for %%A in (.) do SET SW_NAME_DETECT=%%~nA
@@ -139,14 +145,14 @@ SET vTYPE=
 SET vBUILD=
 GOTO :EOF
 
-:: --------------------
+::: --------------------
 :GET_VERSION_STRING
-:: --------------------
+::: --------------------
 :: Precedence is Git, VERSION_FILE, then DEFAULT_VERSION.
 :: Check if git is available by testing git describe.
 IF NOT DEFINED fQUIET (
-  ECHO GIT VisualStudio Version
-  ECHO ========================
+  ECHO Git - Visual Studio VersionInfo Generator
+  ECHO =========================================
   ECHO.
 )
 CALL git describe --match v* HEAD > NUL 2>&1
@@ -175,9 +181,9 @@ IF "%SW_NAME%" EQU "" SET SW_NAME=%SW_NAME_DETECT%
 SET FULL_VERSION=%FULL_VERSION:~1%
 GOTO :EOF
 
-:: --------------------
+::: --------------------
 :GET_FULL_VERSION
-:: --------------------
+::: --------------------
 FOR /F "tokens=*" %%A IN ('"git describe --long --dirty --match v* 2> NUL"') DO (
   SET FULL_VERSION=%%A
 )
@@ -202,21 +208,21 @@ IF ERRORLEVEL 1 (
 SET tmp=
 GOTO :EOF
 
-:: --------------------
+::: --------------------
 :GET_VS_DETAILS
-:: --------------------
+::: --------------------
 IF "%SolutionName%" NEQ "" SET SW_NAME=%SolutionName%
 GOTO :EOF
 
-:: --------------------
+::: --------------------
 :WRITE_CACHE
-:: --------------------
+::: --------------------
 ECHO %SW_NAME: =_% VERSION %FULL_VERSION%> "%CACHE_FILE%"
 GOTO :EOF
 
-:: --------------------
+::: --------------------
 :PARSE_FULL_VERSION
-:: --------------------
+::: --------------------
 IF NOT DEFINED fQUIET (
   ECHO NAME: %SW_NAME%
   ECHO.
@@ -231,11 +237,11 @@ FOR /F "tokens=1,2,* delims=-" %%A IN ("%FULL_VERSION%") DO (
   SET VERSION_REST=%%C
 )
 IF [%SCND_PART%] EQU [%SCND_NUMBER%] (
-  REM Patch Count; no stage identifier
+  :: Patch Count; no stage identifier
   SET STAGE=
   SET PATCHCOUNT=%SCND_PART%
 ) ELSE (
-  REM Not Patch Count, thus stage identifier
+  :: Not Patch Count, thus stage identifier
   SET STAGE=%SCND_PART%
   FOR /F "tokens=1,* delims=-" %%A IN ("%VERSION_REST%") DO (
     SET PATCHCOUNT=%%A
@@ -265,9 +271,9 @@ IF NOT DEFINED fQUIET (
 )
 GOTO :EOF
 
-:: --------------------
+::: --------------------
 :CHECK_CACHE
-:: --------------------
+::: --------------------
 :: Exit early if a cached git built version matches the current version.
 IF DEFINED HEADER_OUT_FILE (
   IF EXIST "%HEADER_OUT_FILE%" (
@@ -286,9 +292,9 @@ IF DEFINED HEADER_OUT_FILE (
 )
 GOTO :EOF
 
-:: --------------------
+::: --------------------
 :SET_DETAILS
-:: --------------------
+::: --------------------
 IF NOT DEFINED fQUIET (
   ECHO VERSION TYPE
   ECHO ------------
@@ -377,9 +383,9 @@ IF NOT DEFINED fQUIET (
 GOTO :EOF
 
 
-:: --------------------
+::: --------------------
 :SET_VERSION_DIGITS
-:: --------------------
+::: --------------------
 IF NOT DEFINED fQUIET (
   ECHO VERSION DIGITS
   ECHO --------------
@@ -420,9 +426,9 @@ IF NOT DEFINED fQUIET (
 )
 GOTO :EOF
 
-:: --------------------
+::: --------------------
 :GET_PATCHCOUNTS
-:: --------------------
+::: --------------------
 SET vPATCH_ID=
 SET vMAINT_ID=
 SET vMINOR_ID=
@@ -464,30 +470,31 @@ FOR /F "tokens=2 delims=-" %%A IN ("%vMINOR_ID%") DO SET vMINOR_PATCHES=%%A
 FOR /F "tokens=2 delims=-" %%A IN ("%vMAJOR_ID%") DO SET vMAJOR_PATCHES=%%A
 GOTO :EOF
 
-:: --------------------
+::: --------------------
 :PREP_OUT
-:: --------------------
+::: --------------------
 IF NOT %fNO_VCS% EQU 0 ( SET fNO_VCS=true) ELSE ( SET fNO_VCS=false)
 IF NOT %fPRIVATE% EQU 0 ( SET fPRIVATE=true) ELSE ( SET fPRIVATE=false)
 IF NOT %fPATCHED% EQU 0 ( SET fPATCHED=true) ELSE ( SET fPATCHED=false)
 IF NOT %fPRE_RELEASE% EQU 0 ( SET fPRE_RELEASE=true) ELSE ( SET fPRE_RELEASE=false)
 GOTO :EOF
 
-:: --------------------
+::: --------------------
 :WRITE_OUT
-:: --------------------
+::: --------------------
 SET SCRIPT_NAME=%~n0%
 ECHO.// Generated version info [%SCRIPT_NAME%].>"%HEADER_OUT_FILE%"
-ECHO.using System; >> "%HEADER_OUT_FILE%"
-REM ECHO. >> "%HEADER_OUT_FILE%"
+ECHO. >> "%HEADER_OUT_FILE%"
 ECHO.namespace BuildInfo >> "%HEADER_OUT_FILE%"
 ECHO.{ >> "%HEADER_OUT_FILE%"
 ECHO.    // %SW_NAME% v%VERSION% - %vTYPE% >> "%HEADER_OUT_FILE%"
 ECHO.    // Build: %FULL_VERSION% (%vBUILD%) >> "%HEADER_OUT_FILE%"
+ECHO. >> "%HEADER_OUT_FILE%"
 ECHO.    public static class Product >> "%HEADER_OUT_FILE%"
 ECHO.    { >> "%HEADER_OUT_FILE%"
 ECHO.        public const string Name = "%SW_NAME%"; >> "%HEADER_OUT_FILE%"
 ECHO.    } >> "%HEADER_OUT_FILE%"
+ECHO. >> "%HEADER_OUT_FILE%"
 ECHO.    public static class Version >> "%HEADER_OUT_FILE%"
 ECHO.    { >> "%HEADER_OUT_FILE%"
 ECHO.        public const string		Short				= "%VERSION%";				>> "%HEADER_OUT_FILE%"
@@ -519,6 +526,6 @@ ECHO.    } >> "%HEADER_OUT_FILE%"
 ECHO.} >> "%HEADER_OUT_FILE%"
 GOTO :EOF
 
-:: --------------------
+::: --------------------
 :END
-:: --------------------
+::: --------------------

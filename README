@@ -1,31 +1,32 @@
-Git - Visual Studio VERSIONINFO Generator
+Git - Visual Studio VersionInfo Generator
 =========================================
 
 Overview
 --------
 This project uses an MS-DOS batch file to parse the output of git-describe and
-generate a header to be included in a project's file version resource.  For
+generate .cs-file to be included in a project's file version resource.  For
 building from source without having git the script can use a version file or
-embedded default value.
+embedded default value (and marks the build as unversioned)
 
 Usage
 -----
 This can be run from the command line.  It uses the following arguments:
 
-	usage: [--help] | | [--quiet] [--force] [CACHE PATH] [OUT FILE] [SOFTWARE NAME]
+	usage: [--help] | | [--quiet] [--force] [CACHE PATH] [OUT FILE] [SW NAME]
 
 	When called without arguments version information writes to console.
 
-	--help        - displays this output.
+	--help     - displays this output.
 
-	--quiet       - Supress console output.
-	--force       - Ignore cached version information.
-	CACHE PATH    - Path for non-tracked file to store git-describe version.
-	OUT FILE      - Path to writable file that is included in the project's rc file.
-	SOFTWARE NAME - Override auto-detected software name
+	--quiet    - Supress console output.
+	--force    - Ignore cached version information.
+	CACHE PATH - Path for non-tracked file to store git-describe version.
+	OUT FILE   - Path to writable file that is included in the project.
+	SW NAME    - Override auto-detected software name
 
-	Version information is expected to be in the format: vMajor[.Minor[.Maint[.Bugfix]]][-stage#][-Patchcount-Committish]
-	Where -stage# is alpha, beta, or rc. ( example: v1.0.0-alpha0 )
+	Version information is expected to be in the format: 
+	vMajor[.Minor[.Maint[.Bugfix]]][-stage#][-Patchcount-Committish]
+	( where -stage# is alpha, beta, or rc. Example: v1.0.0-alpha0 )
 
 	Example pre-build event:
 	CALL $(SolutionDir)scripts\git-vs-versioninfo.bat "$(SolutionDir)scripts\" "$(ProjectDir)git-vs-versioninfo.cs" "$(SolutionName)"
@@ -47,23 +48,27 @@ Generated definitions:
     Git committish
 
   - ReleaseType
-    Description of the release (e.g. "Beta Release [n]", "Release Candidate [n]", etc.)
+    Description of the release
+	(e.g. "Beta Release [n]", "Release Candidate [n]", etc.)
 	
   - BuildType
     Description of the build:
-	 "Custom Build"  when there is no version control (i.e. git[repo]) available on this machine
-	 "Private Build" when there are changes since the last commit;
-	 "Patched Build" when there are commits between the last (tagged) release and the commit being built;
-	 "Release Build" when none of the above is true.
+	- "Custom Build"  when there is no git(repo) available;
+	- "Private Build" when there are changes since the last commit;
+	- "Patched Build" when there are commits between the last (tagged) release
+      and the commit being built;
+	- "Release Build" when none of the above is true.
 
   - IsUnversioned
-	Set when there is no version control active (i.e. no git installed or not repo available).
+	Set when there is no version control active 
+    (i.e. no git installed or not repo available).
 	
   - IsPrivate
     Set when HEAD is dirty (or this is a Custom Build).
 
   - IsPatched
-    Set when there are commits between the tag and the commit being built (or this is a Custom Build).
+    Set when there are commits between the tag and the commit being built 
+    (or this is a Custom Build).
 
   - IsPreRelease
     Set when the tag includes 'alpha', 'beta' or 'rc'.
@@ -75,9 +80,12 @@ Generated definitions:
 	Commits since last (tagged) {Major/Minor/Maintenance/Bugfix} version/release.
 
   - ProductVersion
-    Product version (same as Version, but always in Major.Minor.Maintenance.Bugfix format)
+    Product version
+	(same as Version, but always in Major.Minor.Maintenance.Bugfix format).
 
   - TechnicalVersion
-	Version in format: Major.Minor.Maintenance.PatchesMaintenance (this can be configured in the script).
+	Version in format: Major.Minor.Maintenance.PatchesMaintenance
+	(this can be configured in the script).
 
-  * PluginApi.Version = <n> is being parsed from git tag in the format: plugin-api-v<n>
+  * PluginApi.Version = <n> is being parsed from git tag in the format: 
+    plugin-api-v<n>
