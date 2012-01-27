@@ -12,7 +12,7 @@ Usage
 -----
 This can be run from the command line.  It uses the following arguments:
 
-	usage: [--help] | | [--quiet] [--force] [CACHE PATH] [OUT FILE] [SW NAME]
+	usage: [--help] | | [--force] [--quiet] CACHE_PATH OUTFILE ROOTNS PRJNAME SWNAME
 
 	When called without arguments version information writes to console.
 
@@ -20,16 +20,18 @@ This can be run from the command line.  It uses the following arguments:
 
 	--quiet    - Supress console output.
 	--force    - Ignore cached version information.
-	CACHE PATH - Path for non-tracked file to store git-describe version.
-	OUT FILE   - Path to writable file that is included in the project.
-	SW NAME    - Override auto-detected software name
+	CACHE_PATH - Path for non-tracked file to store git-describe version.
+	OUTFILE    - Path to writable file that is included in the project.
+	ROOTNS     - Project's root namespace
+	PRJNAME	   - Project name
+	SWNAME     - Override auto-detected software name
 
 	Version information is expected to be in the format: 
 	vMajor[.Minor[.Maint[.Bugfix]]][-stage#][-Patchcount-Committish]
 	( where -stage# is alpha, beta, or rc. Example: v1.0.0-alpha0 )
 
 	Example pre-build event:
-	CALL $(SolutionDir)scripts\git-vs-versioninfo.bat "$(SolutionDir)scripts\" "$(ProjectDir)git-vs-versioninfo.cs" "$(SolutionName)"
+	CALL $(SolutionDir)scripts\git-vs-versioninfo.bat "$(ProjectDir)" "$(ProjectDir)git-vs-versioninfo.cs" "$(RootNamespace)" "$(ProjectName)" "$(SolutionName)"
 
 
 Notes
