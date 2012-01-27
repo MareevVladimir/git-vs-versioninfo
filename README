@@ -34,8 +34,8 @@ This can be run from the command line.  It uses the following arguments:
 Notes
 -----
 Generated definitions:
-  - Version
-    Terminated string of the git tag minus the leading 'v'.
+  - Short
+    Git tag minus the leading 'v' and trailing release markers.
 
   - Build
     Full (git) version identifier.
