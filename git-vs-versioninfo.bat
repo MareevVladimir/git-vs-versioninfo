@@ -28,6 +28,8 @@ SET COUNT_PATCHES_FROM=maint
 :CHECK_ARGS
 :: --------------------
 
+SET SW_NAME=
+
 :: Console output only.
 IF [%1] == [] GOTO START
 
@@ -49,8 +51,6 @@ IF [%~nx1] NEQ [] (
 IF "%~1" NEQ "" (
   SET SW_NAME=%~1
   SHIFT
-) ELSE (
-  SET SW_NAME=
 )
 :: This should always be the last argument.
 IF [%1] NEQ [] GOTO USAGE
