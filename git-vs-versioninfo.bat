@@ -36,7 +36,6 @@ IF "%~1" == "--quiet" SET fQUIET=1& SHIFT
 IF "%~1" == "--force" SET fFORCE=1& SHIFT
 
 IF EXIST %~1\NUL (
-  :: %1 is a path
   SET CACHE_FILE=%~s1\%VERSION_FILE%
   SHIFT
 )
@@ -45,6 +44,13 @@ IF [%~nx1] NEQ [] (
   :: %1 is a file
   SET HEADER_OUT_FILE=%~fs1
   SHIFT
+)
+
+IF "%~1" NEQ "" (
+  SET SW_NAME=%~1
+  SHIFT
+) ELSE (
+  SET SW_NAME=
 )
 :: This should always be the last argument.
 IF [%1] NEQ [] GOTO USAGE
@@ -63,22 +69,23 @@ GOTO START
 :: --------------------
 :USAGE
 :: --------------------
-ECHO usage: [--help] ^| ^| [--quiet] [--force] [CACHE PATH] [OUT FILE]
+ECHO usage: [--help] ^| ^| [--quiet] [--force] [CACHE PATH] [OUT FILE] [SOFTWARE NAME]
 ECHO.
 ECHO  When called without arguments version information writes to console.
 ECHO.
-ECHO  --help      - displays this output.
+ECHO  --help        - displays this output.
 ECHO.
-ECHO  --quiet     - Suppress console output.
-ECHO  --force     - Ignore cached version information.
-ECHO  CACHE PATH  - Path for non-tracked file to store git-describe version.
-ECHO  OUT FILE    - Path to writable file that is included in the project's rc file.
+ECHO  --quiet       - Suppress console output.
+ECHO  --force       - Ignore cached version information.
+ECHO  CACHE PATH    - Path for non-tracked file to store git-describe version.
+ECHO  OUT FILE      - Path to writable file that is included in the project's rc file.
+ECHO  SOFTWARE NAME - Override auto-detected software name
 ECHO.
 ECHO.Version information is expected to be in the format: vMajor[.Minor[.Maint[.Bugfix]]][-stage#][-Patchcount-Committish]
 ECHO.Where -stage# is alpha, beta, or rc. ( example: v1.0.0-alpha0 )
 ECHO.
 ECHO.Example pre-build event:
-ECHO.CALL $(SolutionDir)scripts\git-vs-versioninfo.bat "$(SolutionDir)scripts\" "$(ProjectDir)git-vs-versioninfo.cs"
+ECHO.CALL $(SolutionDir)scripts\git-vs-versioninfo.bat "$(SolutionDir)scripts\" "$(ProjectDir)git-vs-versioninfo.cs" "$(SolutionName)"
 ECHO.
 GOTO END
 
@@ -114,7 +121,7 @@ REM ====================
 :INIT_VARS
 SET FULL_VERSION=
 SET PLUGIN_API_VERSION=0
-for %%A in (.) do SET SW_NAME=%%~nA
+for %%A in (.) do SET SW_NAME_DETECT=%%~nA
 
 SET vPATCH_PATCHES=
 SET vMAINT_PATCHES=
@@ -152,17 +159,18 @@ IF NOT ERRORLEVEL 1 (
     FOR /F "tokens=1,2,3" %%A IN (%VERSION_FILE%) DO (
       IF "%%B" EQU "VERSION" (
 		SET FULL_VERSION=v%%C
-		SET SW_NAME=%%A
+		SET SW_NAME_DETECT=%%A
 	  ) ELSE (
 		SET FULL_VERSION=%DEFAULT_VERSION%
 	  )
     )
-	SET SW_NAME=%SW_NAME:_= %
+	SET SW_NAME_DETECT=%SW_NAME_DETECT:_= %
   ) ELSE (
     :: Default to the DEFAULT_VERSION
     SET FULL_VERSION=%DEFAULT_VERSION%
   )
 )
+IF "%SW_NAME%" EQU "" SET SW_NAME=%SW_NAME_DETECT%
 SET FULL_VERSION=%FULL_VERSION:~1%
 GOTO :EOF
 
@@ -177,7 +185,7 @@ FOR /F "tokens=2 delims=v" %%A IN ('"git describe --abbrev=0 --match plugin-api-
 )
 
 FOR /F "tokens=*" %%A IN ('"git rev-parse --show-toplevel 2> NUL"') DO SET GIT_ROOT=%%A
-for %%A in ("%GIT_ROOT%") do SET SW_NAME=%%~nA
+for %%A in ("%GIT_ROOT%") do SET SW_NAME_DETECT=%%~nA
 
 SET tmp=
 CALL git update-index -q --refresh >NUL 2>&1
