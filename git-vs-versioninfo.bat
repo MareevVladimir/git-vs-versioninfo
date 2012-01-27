@@ -98,14 +98,14 @@ CALL :INIT_VARS
 CALL :GET_VERSION_STRING
 IF DEFINED fGIT_AVAILABLE (
   IF DEFINED fLEAVE_NOW GOTO END
-  IF DEFINED CACHE_FILE (
-    CALL :CHECK_CACHE
-  )
 )
 CALL :GET_VS_DETAILS
-CALL :WRITE_CACHE
-IF DEFINED fLEAVE_NOW GOTO END
 CALL :PARSE_FULL_VERSION
+IF DEFINED CACHE_FILE (
+  CALL :CHECK_CACHE
+)
+IF DEFINED fLEAVE_NOW GOTO END
+CALL :WRITE_CACHE
 CALL :SET_DETAILS
 CALL :SET_VERSION_DIGITS
 CALL :PREP_OUT
@@ -129,6 +129,7 @@ SET vMINOR_PATCHES=
 SET vMAJOR_PATCHES=
 
 :: Flags
+SET fNO_VCS=0
 SET fPRIVATE=0
 SET fPATCHED=0
 SET fPRE_RELEASE=0
@@ -202,27 +203,6 @@ SET tmp=
 GOTO :EOF
 
 :: --------------------
-:CHECK_CACHE
-:: --------------------
-:: Exit early if a cached git built version matches the current version.
-IF DEFINED HEADER_OUT_FILE (
-  IF EXIST "%HEADER_OUT_FILE%" (
-    IF [%fFORCE%] EQU [1] DEL "%CACHE_FILE%"
-    IF EXIST "%CACHE_FILE%" (
-      FOR /F "tokens=1,2,3" %%A IN (%CACHE_FILE%) DO (
-        IF "%%C" == "%FULL_VERSION%" (
-          IF NOT DEFINED fQUIET (
-            ECHO Build version is assumed unchanged from: %FULL_VERSION%.
-          )
-          SET fLEAVE_NOW=1
-        )
-      )
-    )
-  )
-)
-GOTO :EOF
-
-:: --------------------
 :GET_VS_DETAILS
 :: --------------------
 IF "%SolutionName%" NEQ "" SET SW_NAME=%SolutionName%
@@ -242,7 +222,7 @@ IF NOT DEFINED fQUIET (
   ECHO.
   ECHO VERSION PARSING
   ECHO ---------------
-  ECHO FULL VERSION:		%FULL_VERSION%
+  ECHO DETECTED:		%FULL_VERSION%
 )
 FOR /F "tokens=1,2,* delims=-" %%A IN ("%FULL_VERSION%") DO (
   SET VERSION=%%A
@@ -267,15 +247,42 @@ FOR /F "tokens=1,2,* delims=-" %%A IN ("%VERSION_REST%") DO (
   SET MARKER=%%B
   SET VERSION_REST=%%C
 )
+IF NOT DEFINED fGIT_AVAILABLE (
+  SET fNO_VCS=1
+  SET MARKER=novcs
+  SET FULL_VERSION=%FULL_VERSION:-dirty=%-novcs[%COMPUTERNAME%]
+)
 IF [%MARKER%] EQU [] SET MARKER=clean
 IF NOT DEFINED fQUIET (
   ECHO Version:		%VERSION%
+  ECHO Build:			%FULL_VERSION%
   ECHO Stage identifier:	%STAGE%
   ECHO Patch count:		%PATCHCOUNT%
   ECHO Committish:		%COMMITTISH%
   ECHO Dirty marker:		%MARKER%
   ECHO Rest:				%VERSION_REST%
   ECHO.
+)
+GOTO :EOF
+
+:: --------------------
+:CHECK_CACHE
+:: --------------------
+:: Exit early if a cached git built version matches the current version.
+IF DEFINED HEADER_OUT_FILE (
+  IF EXIST "%HEADER_OUT_FILE%" (
+    IF [%fFORCE%] EQU [1] DEL "%CACHE_FILE%"
+    IF EXIST "%CACHE_FILE%" (
+      FOR /F "tokens=1,2,3" %%A IN (%CACHE_FILE%) DO (
+        IF "%%C" == "%FULL_VERSION%" (
+          IF NOT DEFINED fQUIET (
+            ECHO Build version is assumed unchanged from: %FULL_VERSION%.
+          )
+          SET fLEAVE_NOW=1
+        )
+      )
+    )
+  )
 )
 GOTO :EOF
 
@@ -345,16 +352,23 @@ IF "%MARKER%" EQU "dirty" (
 	SET fPATCHED=1
 	SET fPRIVATE=1
 ) ELSE (
-  IF "%PATCHCOUNT%" NEQ "0" (
-		SET vBUILD=Patch Build
-		SET fPATCHED=1
-	) ELSE (
-		SET vBUILD=Release Build
-	)
+  IF "%MARKER%" EQU "novcs" (
+	SET vBUILD=Custom Build
+	SET fPATCHED=1
+	SET fPRIVATE=1
+  ) ELSE (
+    IF "%PATCHCOUNT%" NEQ "0" (
+      SET vBUILD=Patch Build
+      SET fPATCHED=1
+    ) ELSE (
+	  SET vBUILD=Release Build
+    )
+  )
 )
 IF NOT DEFINED fQUIET (
   ECHO Build type:		%vBUILD%
   ECHO.
+  ECHO [F] Unversioned:	%fNO_VCS%
   ECHO [F] Patched:		%fPATCHED%
   ECHO [F] Private:		%fPRIVATE%
   ECHO [F] PreRelease:		%fPRE_RELEASE%
@@ -453,6 +467,7 @@ GOTO :EOF
 :: --------------------
 :PREP_OUT
 :: --------------------
+IF NOT %fNO_VCS% EQU 0 ( SET fNO_VCS=true) ELSE ( SET fNO_VCS=false)
 IF NOT %fPRIVATE% EQU 0 ( SET fPRIVATE=true) ELSE ( SET fPRIVATE=false)
 IF NOT %fPATCHED% EQU 0 ( SET fPATCHED=true) ELSE ( SET fPATCHED=false)
 IF NOT %fPRE_RELEASE% EQU 0 ( SET fPRE_RELEASE=true) ELSE ( SET fPRE_RELEASE=false)
@@ -477,6 +492,7 @@ ECHO.        public const int		PatchCount			= %PATCHCOUNT%;					>> "%HEADER_OUT_
 ECHO.        public const string		Committish			= "%COMMITTISH%";			>> "%HEADER_OUT_FILE%"
 ECHO.        public const string		ReleaseType			= "%vTYPE%";				>> "%HEADER_OUT_FILE%"
 ECHO.        public const string		BuildType			= "%vBUILD%";				>> "%HEADER_OUT_FILE%"
+ECHO.        public const bool		IsUnversioned			= %fNO_VCS%;					>> "%HEADER_OUT_FILE%"
 ECHO.        public const bool		IsPatched			= %fPATCHED%;					>> "%HEADER_OUT_FILE%"
 ECHO.        public const bool		IsPrivate			= %fPRIVATE%;					>> "%HEADER_OUT_FILE%"
 ECHO.        public const bool		IsPreRelease		= %fPRE_RELEASE%;			>> "%HEADER_OUT_FILE%"

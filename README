@@ -50,16 +50,20 @@ Generated definitions:
     Description of the release (e.g. "Beta Release [n]", "Release Candidate [n]", etc.)
 	
   - BuildType
-    Description of the build: 
+    Description of the build:
+	 "Custom Build"  when there is no version control (i.e. git[repo]) available on this machine
 	 "Private Build" when there are changes since the last commit;
 	 "Patched Build" when there are commits between the last (tagged) release and the commit being built;
 	 "Release Build" when none of the above is true.
 
+  - IsUnversioned
+	Set when there is no version control active (i.e. no git installed or not repo available).
+	
   - IsPrivate
-    Set when HEAD is dirty.
+    Set when HEAD is dirty (or this is a Custom Build).
 
   - IsPatched
-    Set when there are commits between the tag and the commit being built.
+    Set when there are commits between the tag and the commit being built (or this is a Custom Build).
 
   - IsPreRelease
     Set when the tag includes 'alpha', 'beta' or 'rc'.
