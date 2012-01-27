@@ -412,6 +412,7 @@ SET VERSION_PRODUCT=%vMAJOR%.%vMINOR%.%vMAINT%.%vPATCH%
 SET VERSION_TECHNICAL=%vMAJOR%.%vMINOR%.%vMAINT%.%vMAINT_PATCHES%
 IF [%COUNT_PATCHES_FROM%] EQU [minor] SET VERSION_TECHNICAL=%vMAJOR%.%vMINOR%.%vMAINT%.%vMINOR_PATCHES%
 IF [%COUNT_PATCHES_FROM%] EQU [major] SET VERSION_TECHNICAL=%vMAJOR%.%vMINOR%.%vMAINT%.%vMAJOR_PATCHES%
+SET PLUGIN_API_VERSION_TECHNICAL=%PLUGIN_API_VERSION%.%vMAJOR%.%vMINOR%.%vMINOR_PATCHES%
 IF NOT DEFINED fQUIET (
   ECHO Major:			%vMAJOR%	[%vMAJOR_PATCHES%]
   ECHO Minor:			%vMINOR%	[%vMINOR_PATCHES%]
@@ -419,9 +420,15 @@ IF NOT DEFINED fQUIET (
   ECHO Bugfix:			%vPATCH%	[%vPATCH_PATCHES%]
   ECHO [Removed]:		%vLOST%
   ECHO.
+  ECHO FULL VERSION IDENTIFIERS
+  ECHO ------------------------
   ECHO Product version:	%VERSION_PRODUCT%
   ECHO Technical version:	%VERSION_TECHNICAL%
-  ECHO Plugin API version:	%PLUGIN_API_VERSION%
+  ECHO.
+  ECHO Plugin API
+  ECHO ----------
+  ECHO API Version:		%PLUGIN_API_VERSION%
+  ECHO Technical version: 	%PLUGIN_API_VERSION_TECHNICAL%
   ECHO.
 )
 GOTO :EOF
@@ -521,8 +528,8 @@ ECHO.    } >> "%HEADER_OUT_FILE%"
 ECHO. >> "%HEADER_OUT_FILE%"
 ECHO.    public static class PluginApi >> "%HEADER_OUT_FILE%"
 ECHO.    { >> "%HEADER_OUT_FILE%"
-ECHO.        public const int	Version = %PLUGIN_API_VERSION%; >> "%HEADER_OUT_FILE%"
-ECHO.        public const string	IfaceAssemblyVersion = "%PLUGIN_API_VERSION%.%vMAJOR%.%vMINOR%.%vMAINT%"; >> "%HEADER_OUT_FILE%"
+ECHO.        public const int		Version				= %PLUGIN_API_VERSION%; >> "%HEADER_OUT_FILE%"
+ECHO.        public const string		TechnicalVersion	= "%PLUGIN_API_VERSION_TECHNICAL%"; >> "%HEADER_OUT_FILE%"
 ECHO.    } >> "%HEADER_OUT_FILE%"
 ECHO.} >> "%HEADER_OUT_FILE%"
 GOTO :EOF
