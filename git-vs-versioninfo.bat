@@ -177,7 +177,7 @@ FOR /F "tokens=2 delims=v" %%A IN ('"git describe --abbrev=0 --match plugin-api-
 )
 
 FOR /F "tokens=*" %%A IN ('"git rev-parse --show-toplevel 2> NUL"') DO SET GIT_ROOT=%%A
-for %%A in (%GIT_ROOT%) do SET SW_NAME=%%~nA
+for %%A in ("%GIT_ROOT%") do SET SW_NAME=%%~nA
 
 SET tmp=
 CALL git update-index -q --refresh >NUL 2>&1
