@@ -319,7 +319,7 @@ IF "%vTYPE%" EQU "" ( IF "%STAGE:~,3%" EQU "-rc" (
 ))
 IF "%vTYPE%" EQU "" ( IF "%STAGE:~,3%" EQU "-gm" (
   SET STAGENO=%STAGE:~3%
-  SET vTYPE=Version Release
+  SET vTYPE=-
 ))
 IF "%vTYPE%" EQU "" ( IF "%STAGE:~,4%" EQU "-dev" (
   SET STAGENO=%STAGE:~4%
@@ -340,38 +340,42 @@ IF "%vTYPE%" EQU "" ( IF "%STAGE:~,2%" EQU "-r" (
 SET STAGE=%STAGE:~1%
 IF "%vTYPE%" EQU "" (
   IF [%STAGE%] EQU [] (
-	SET vTYPE=Version Release
+	SET vTYPE=-
   ) ELSE (
-	SET vTYPE=Version Release [%STAGE%]
+	SET vTYPE=Special Release [%STAGE%]
   )
 ) ELSE (
-  IF "%vTYPE%" NEQ "Version Release" (
+  IF "%vTYPE%" NEQ "-" (
   IF "%STAGENO%" NEQ "" SET vTYPE=%vTYPE% %STAGENO%
 	SET fPRE_RELEASE=1
   )
 )
-IF NOT DEFINED fQUIET (
-  ECHO Release type:		%vTYPE%
-)
+SET PC_SUFFIX=
+IF "%PATCHCOUNT%" NEQ "0" SET PC_SUFFIX= %PATCHCOUNT%
 IF "%MARKER%" EQU "dirty" (
+	IF "%vTYPE%" EQU "-" SET vTYPE=Test Release%PC_SUFFIX%
 	SET vBUILD=Private Build
 	SET fPATCHED=1
 	SET fPRIVATE=1
 ) ELSE (
   IF "%MARKER%" EQU "novcs" (
+	IF "%vTYPE%" EQU "-" SET vTYPE=Unknown Release
 	SET vBUILD=Custom Build
 	SET fPATCHED=1
 	SET fPRIVATE=1
   ) ELSE (
     IF "%PATCHCOUNT%" NEQ "0" (
+	  IF "%vTYPE%" EQU "-" SET vTYPE=Patched Release%PC_SUFFIX%
       SET vBUILD=Patch Build
       SET fPATCHED=1
     ) ELSE (
+	  IF "%vTYPE%" EQU "-" SET vTYPE=RTM
 	  SET vBUILD=Release Build
     )
   )
 )
 IF NOT DEFINED fQUIET (
+  ECHO Release type:		%vTYPE%
   ECHO Build type:		%vBUILD%
   ECHO.
   ECHO [F] Unversioned:	%fNO_VCS%
