@@ -57,7 +57,7 @@ Generated definitions:
     Description of the build:
 	- "Custom Build"  when there is no git(repo) available;
 	- "Private Build" when there are changes since the last commit;
-	- "Patched Build" when there are commits between the last (tagged) release
+	- "Test Build" when there are commits between the last (tagged) release
       and the commit being built;
 	- "Release Build" when none of the above is true.
 
