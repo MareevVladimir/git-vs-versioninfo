@@ -378,7 +378,7 @@ IF "%vTYPE%" EQU "" (
 SET PC_SUFFIX=
 IF "%PATCHCOUNT%" NEQ "0" SET PC_SUFFIX= %PATCHCOUNT%
 IF "%MARKER%" EQU "dirty" (
-	IF "%vTYPE%" EQU "-" SET vTYPE=Test Release%PC_SUFFIX%
+	IF "%vTYPE%" EQU "-" SET vTYPE=Working Copy%PC_SUFFIX%
 	SET vBUILD=Private Build
 	SET fPATCHED=1
 	SET fPRIVATE=1
@@ -390,8 +390,8 @@ IF "%MARKER%" EQU "dirty" (
 	SET fPRIVATE=1
   ) ELSE (
     IF "%PATCHCOUNT%" NEQ "0" (
-	  IF "%vTYPE%" EQU "-" SET vTYPE=Patched Release%PC_SUFFIX%
-      SET vBUILD=Patch Build
+	  IF "%vTYPE%" EQU "-" SET vTYPE=Test Version%PC_SUFFIX%
+      SET vBUILD=Test Build
       SET fPATCHED=1
     ) ELSE (
 	  IF "%vTYPE%" EQU "-" SET vTYPE=RTM
