@@ -16,14 +16,14 @@ SET VERSION_FILE=.git-vs-versioninfo
 ::                   packed version file is available.
 SET DEFAULT_VERSION=v1.0.0-devel
 
-:: COUNT_PATCHES_FROM - Determines which tag to count the number of patches from
-::                for the final portion (build) of the technical version number.
+:: COUNT_PATCHLEVEL_FROM - Determines which tag to count the number of patches from
+::                for the final portion (build / patch level) of the technical version number.
 ::                This version number is very usefull as Assembly Version.
 ::                Valid values are:
 ::                   major - count from earliest Major.0.0* tag.
 ::                   minor - count from earliest Major.Minor.0* tag.
 ::                   maint - count from earliest Major.Minor.Maint tag.
-SET COUNT_PATCHES_FROM=maint
+SET COUNT_PATCHLEVEL_FROM=minor
 
 ::: --------------------
 ::: CHECK_ARGS
@@ -431,16 +431,15 @@ IF [%vMINOR%] EQU [] SET vMINOR=0
 IF [%vMAINT%] EQU [] SET vMAINT=0
 IF [%vPATCH%] EQU [] SET vPATCH=0
 IF DEFINED fGIT_AVAILABLE (
-	CALL :GET_PATCHCOUNTS
+	CALL :GET_PATCHLEVEL
 )
-IF [%vMAJOR_PATCHES%] EQU [] SET vMAJOR_PATCHES=0
-IF [%vMINOR_PATCHES%] EQU [] SET vMINOR_PATCHES=0
-IF [%vMAINT_PATCHES%] EQU [] SET vMAINT_PATCHES=0
-IF [%vPATCH_PATCHES%] EQU [] SET vPATCH_PATCHES=0
 SET VERSION_PRODUCT=%vMAJOR%.%vMINOR%.%vMAINT%.%vPATCH%
-SET VERSION_TECHNICAL=%vMAJOR%.%vMINOR%.%vMAINT%.%vMAINT_PATCHES%
-IF [%COUNT_PATCHES_FROM%] EQU [minor] SET VERSION_TECHNICAL=%vMAJOR%.%vMINOR%.%vMAINT%.%vMINOR_PATCHES%
-IF [%COUNT_PATCHES_FROM%] EQU [major] SET VERSION_TECHNICAL=%vMAJOR%.%vMINOR%.%vMAINT%.%vMAJOR_PATCHES%
+IF [%PATCH_LEVEL%] EQU [] SET PATCH_LEVEL=0
+SET vINTERFACE=%vMAJOR%.%vMINOR%.%vMAINT%
+IF [%COUNT_PATCHLEVEL_FROM%] EQU [minor] SET vINTERFACE=%vMAJOR%.%vMINOR%
+IF [%COUNT_PATCHLEVEL_FROM%] EQU [major] SET vINTERFACE=%vMAJOR%
+SET "PATCH_LEVEL_IDENTIFIER=%PATCH_LEVEL% (v%vINTERFACE%; +%PATCHCOUNT%)"
+SET VERSION_TECHNICAL=%vMAJOR%.%vMINOR%.%vMAINT%.%PATCH_LEVEL%
 SET PLUGIN_API_VERSION_TECHNICAL=%PLUGIN_API_VERSION%.%vMAJOR%.%vMINOR%.%vMINOR_PATCHES%
 IF NOT DEFINED fQUIET (
   ECHO Major:			%vMAJOR%	[%vMAJOR_PATCHES%]
@@ -452,6 +451,7 @@ IF NOT DEFINED fQUIET (
   ECHO FULL VERSION IDENTIFIERS
   ECHO ------------------------
   ECHO Product version:	%VERSION_PRODUCT%
+  ECHO Patch level:		!PATCH_LEVEL_IDENTIFIER!
   ECHO Technical version:	%VERSION_TECHNICAL%
   ECHO.
   ECHO Plugin API
@@ -463,7 +463,7 @@ IF NOT DEFINED fQUIET (
 GOTO :EOF
 
 ::: --------------------
-:GET_PATCHCOUNTS
+:GET_PATCHLEVEL
 ::: --------------------
 SET vPATCH_ID=
 SET vMAINT_ID=
@@ -472,38 +472,57 @@ SET vMAJOR_ID=
 FOR /F "tokens=*" %%A IN ('"git describe --long --match v%vMAJOR%.%vMINOR%.%vMAINT%.%vPATCH% 2> NUL"') DO (
   SET vPATCH_ID=%%A
 )
-IF [%vPATCH_ID%] EQU [] SET vPATCH_ID=v0-0
 FOR /F "tokens=*" %%A IN ('"git describe --long --match v%vMAJOR%.%vMINOR%.%vMAINT%.0 2> NUL"') DO (
   SET vMAINT_ID=%%A
+  IF [%vPATCH_ID%] EQU [] SET vPATCH_ID=%%A
 )
 IF [%vMAINT_ID%] EQU [] (
   FOR /F "tokens=*" %%A IN ('"git describe --long --match v%vMAJOR%.%vMINOR%.%vMAINT% 2> NUL"') DO (
     SET vMAINT_ID=%%A
+    IF [%vPATCH_ID%] EQU [] SET vPATCH_ID=%%A
   )
 )
-IF [%vMAINT_ID%] EQU [] SET vMAINT_ID=%vPATCH_ID%
 FOR /F "tokens=*" %%A IN ('"git describe --long --match v%vMAJOR%.%vMINOR%.0 2> NUL"') DO (
   SET vMINOR_ID=%%A
+  IF [%vPATCH_ID%] EQU [] SET vPATCH_ID=%%A
+  IF [%vMAINT_ID%] EQU [] SET vMAINT_ID=%%A
 )
 IF [%vMINOR_ID%] EQU [] (
   FOR /F "tokens=*" %%A IN ('"git describe --long --match v%vMAJOR%.%vMINOR% 2> NUL"') DO (
     SET vMINOR_ID=%%A
+    IF [%vPATCH_ID%] EQU [] SET vPATCH_ID=%%A
+    IF [%vMAINT_ID%] EQU [] SET vMAINT_ID=%%A
   )
 )
-IF [%vMINOR_ID%] EQU [] SET vMINOR_ID=%vMAINT_ID%
 FOR /F "tokens=*" %%A IN ('"git describe --long --match v%vMAJOR%.0 2> NUL"') DO (
   SET vMAJOR_ID=%%A
+  IF [%vPATCH_ID%] EQU [] SET vPATCH_ID=%%A
+  IF [%vMAINT_ID%] EQU [] SET vMAINT_ID=%%A
+  IF [%vMINOR_ID%] EQU [] SET vMINOR_ID=%%A
 )
 IF [%vMAJOR_ID%] EQU [] (
   FOR /F "tokens=*" %%A IN ('"git describe --long --match v%vMAJOR% 2> NUL"') DO (
     SET vMAJOR_ID=%%A
+    IF [%vPATCH_ID%] EQU [] SET vPATCH_ID=%%A
+    IF [%vMAINT_ID%] EQU [] SET vMAINT_ID=%%A
+    IF [%vMINOR_ID%] EQU [] SET vMINOR_ID=%%A
   )
 )
+IF [%vPATCH_ID%] EQU [] SET vPATCH_ID=v0-0
+IF [%vMAINT_ID%] EQU [] SET vMAINT_ID=%vPATCH_ID%
+IF [%vMINOR_ID%] EQU [] SET vMINOR_ID=%vMAINT_ID%
 IF [%vMAJOR_ID%] EQU [] SET vMAJOR_ID=%vMINOR_ID%
 FOR /F "tokens=2 delims=-" %%A IN ("%vPATCH_ID%") DO SET vPATCH_PATCHES=%%A
 FOR /F "tokens=2 delims=-" %%A IN ("%vMAINT_ID%") DO SET vMAINT_PATCHES=%%A
 FOR /F "tokens=2 delims=-" %%A IN ("%vMINOR_ID%") DO SET vMINOR_PATCHES=%%A
 FOR /F "tokens=2 delims=-" %%A IN ("%vMAJOR_ID%") DO SET vMAJOR_PATCHES=%%A
+IF [%vMAJOR_PATCHES%] EQU [] SET vMAJOR_PATCHES=0
+IF [%vMINOR_PATCHES%] EQU [] SET vMINOR_PATCHES=0
+IF [%vMAINT_PATCHES%] EQU [] SET vMAINT_PATCHES=0
+IF [%vPATCH_PATCHES%] EQU [] SET vPATCH_PATCHES=0
+SET PATCH_LEVEL=%vMAINT_PATCHES%
+IF [%COUNT_PATCHLEVEL_FROM%] EQU [minor] SET PATCH_LEVEL=%vMINOR_PATCHES%
+IF [%COUNT_PATCHLEVEL_FROM%] EQU [major] SET PATCH_LEVEL=%vMAJOR_PATCHES%
 GOTO :EOF
 
 ::: --------------------
@@ -535,7 +554,10 @@ ECHO.    public static class BuildVersion >> "%HEADER_OUT_FILE%"
 ECHO.    { >> "%HEADER_OUT_FILE%"
 ECHO.        public const string		Short				= "%VERSION%";				>> "%HEADER_OUT_FILE%"
 ECHO.        public const string		Build				= "%FULL_VERSION%";			>> "%HEADER_OUT_FILE%"
+ECHO.        public const string		Interface			= "%vINTERFACE%";			>> "%HEADER_OUT_FILE%"
+ECHO.        public const int		PatchLevel			= %PATCH_LEVEL%;				>> "%HEADER_OUT_FILE%"
 ECHO.        public const int		PatchCount			= %PATCHCOUNT%;					>> "%HEADER_OUT_FILE%"
+ECHO.        public const string		PatchLevelIdentifier= "%PATCH_LEVEL_IDENTIFIER%"; >> "%HEADER_OUT_FILE%"
 ECHO.        public const string		Committish			= "%COMMITTISH%";			>> "%HEADER_OUT_FILE%"
 ECHO.        public const string		ReleaseType			= "%vTYPE%";				>> "%HEADER_OUT_FILE%"
 ECHO.        public const string		BuildType			= "%vBUILD%";				>> "%HEADER_OUT_FILE%"
