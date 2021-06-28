@@ -1,13 +1,5 @@
 
-# SUPERSEDED: There are better alternatives then the batch script in this repo
-
-[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
-
-This software is no longer being improved, but of course it can still be used as it always has been as it always has been low-maintenance.
-Please note that there is a better alternative nowadays (2019+): [GitVersion](https://github.com/GitTools/GitVersion)
-
 ---
-
 Git - Visual Studio VersionInfo Generator
 =========================================
 
@@ -15,7 +7,7 @@ Overview
 --------
 
 This project uses an MS-DOS batch file to parse the output of `git-describe` and
-generates a `.cs`-file to be included in a project's.
+generates a `.h`-file to be included in a C++ project's.
 For building from source without having git the script can use a version file
 or embedded default value (and marks the build as _unversioned_)
 
